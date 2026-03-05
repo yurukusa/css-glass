@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Glass — Glassmorphism Generator</title>
+<meta name="description" content="Generate CSS glassmorphism effects. Blur, opacity, border controls. Live preview with background options.">
+<meta property="og:title" content="CSS Glass — Glassmorphism Generator">
+<meta property="og:description" content="Generate CSS glassmorphism effects. Blur, opacity, border controls. Live preview with background options.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yurukusa.github.io/css-glass/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CSS Glass — Glassmorphism Generator">
+<meta name="twitter:description" content="Generate CSS glassmorphism effects. Blur, opacity, border controls. Live preview with background options.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#d29922}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+header{text-align:center;padding:32px 16px 16px}
+header h1{font-size:1.8rem;font-weight:700;margin-bottom:4px}
+header p{color:var(--text2);font-size:0.95rem}
+.app{display:grid;grid-template-columns:1fr 320px;gap:24px;padding:24px;max-width:1200px;margin:0 auto;width:100%;flex:1}
+@media(max-width:860px){.app{grid-template-columns:1fr;}}
+
+/* Preview */
+.preview-wrap{display:flex;flex-direction:column;gap:12px}
+.bg-options{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bg-options button,.bg-options label{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-size:0.82rem;transition:border-color .2s,color .2s}
+.bg-options button.active,.bg-options label.active{border-color:var(--accent);color:var(--accent)}
+.bg-options button:hover,.bg-options label:hover{border-color:var(--accent);color:var(--text)}
+.bg-options input[type=file]{display:none}
+.preview-area{position:relative;border-radius:12px;overflow:hidden;min-height:400px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+.preview-bg{position:absolute;inset:0;z-index:0;transition:background .4s}
+.preview-bg.grad1{background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#f093fb 100%)}
+.preview-bg.grad2{background:linear-gradient(135deg,#43e97b 0%,#38f9d7 50%,#4facfe 100%)}
+.preview-bg.grad3{background:linear-gradient(135deg,#fa709a 0%,#fee140 50%,#f7797d 100%)}
+.preview-bg img{width:100%;height:100%;object-fit:cover}
+
+/* Floating shapes */
+.shapes-container{position:absolute;inset:0;overflow:hidden;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)}
+.shape{position:absolute;border-radius:50%;opacity:0.6;animation:floatShape linear infinite}
+@keyframes floatShape{0%{transform:translateY(100%) scale(0.5);opacity:0}10%{opacity:0.6}90%{opacity:0.6}100%{transform:translateY(-120%) scale(1.2);opacity:0}}
+
+.glass-card{position:relative;z-index:1;width:340px;max-width:90%;padding:32px;transition:all .15s}
+.glass-card h2{font-size:1.3rem;margin-bottom:8px;color:#fff}
+.glass-card p{font-size:0.9rem;color:rgba(255,255,255,0.8);margin-bottom:20px;line-height:1.5}
+.glass-card .sample-btn{padding:10px 24px;border:none;border-radius:8px;background:rgba(255,255,255,0.2);color:#fff;font-size:0.9rem;cursor:default;backdrop-filter:blur(4px)}
+
+/* Controls */
+.controls{display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.panel h3{font-size:0.85rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px}
+.ctrl{margin-bottom:14px}
+.ctrl:last-child{margin-bottom:0}
+.ctrl label{display:flex;justify-content:space-between;align-items:center;font-size:0.85rem;margin-bottom:6px;color:var(--text)}
+.ctrl label span{color:var(--accent);font-variant-numeric:tabular-nums}
+.ctrl input[type=range]{width:100%;accent-color:var(--accent);background:transparent;height:6px;-webkit-appearance:none;appearance:none;border-radius:3px;background:var(--border);outline:none}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer}
+.ctrl input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:none}
+.color-row{display:flex;gap:8px;align-items:center}
+.color-row input[type=color]{width:40px;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;padding:2px}
+.color-row input[type=text]{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:0.85rem;font-family:monospace}
+.toggle-row{display:flex;align-items:center;gap:10px;font-size:0.85rem}
+.toggle-row input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+
+/* Presets */
+.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.presets button{padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-size:0.75rem;transition:all .2s}
+.presets button:hover{border-color:var(--accent);color:var(--text)}
+.presets button.active{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,0.08)}
+
+/* Output */
+.output-area{position:relative}
+.output-area pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:0.82rem;color:var(--text);overflow-x:auto;line-height:1.6;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;white-space:pre-wrap;word-break:break-all}
+.copy-btn{position:absolute;top:8px;right:8px;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-size:0.78rem;transition:all .2s}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.copy-btn.copied{border-color:var(--green);color:var(--green)}
+
+footer{text-align:center;padding:24px;color:var(--text2);font-size:0.85rem;border-top:1px solid var(--border);margin-top:auto}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CSS Glass</h1>
+  <p>Glassmorphism Generator</p>
+</header>
+
+<div class="app">
+  <div class="preview-wrap">
+    <div class="bg-options">
+      <button class="active" data-bg="grad1">Purple-Pink</button>
+      <button data-bg="grad2">Blue-Green</button>
+      <button data-bg="grad3">Orange-Red</button>
+      <button data-bg="shapes">Shapes</button>
+      <label data-bg="custom">Upload<input type="file" id="bgUpload" accept="image/*"></label>
+    </div>
+    <div class="preview-area">
+      <div class="preview-bg grad1" id="previewBg"></div>
+      <div class="glass-card" id="glassCard">
+        <h2>Glass Card</h2>
+        <p>This card uses CSS glassmorphism with backdrop-filter blur, semi-transparent backgrounds, and subtle borders.</p>
+        <button class="sample-btn">Get Started</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="panel">
+      <h3>Properties</h3>
+      <div class="ctrl">
+        <label>Blur <span id="blurVal">10px</span></label>
+        <input type="range" id="blur" min="0" max="30" value="10" step="1">
+      </div>
+      <div class="ctrl">
+        <label>Opacity <span id="opacityVal">0.15</span></label>
+        <input type="range" id="opacity" min="0" max="100" value="15" step="1">
+      </div>
+      <div class="ctrl">
+        <label>Background Color</label>
+        <div class="color-row">
+          <input type="color" id="bgColor" value="#ffffff">
+          <input type="text" id="bgColorText" value="#ffffff" maxlength="7">
+        </div>
+      </div>
+      <div class="ctrl">
+        <label>Border Opacity <span id="borderOpVal">0.2</span></label>
+        <input type="range" id="borderOp" min="0" max="100" value="20" step="1">
+      </div>
+      <div class="ctrl">
+        <label>Border Radius <span id="radiusVal">16px</span></label>
+        <input type="range" id="radius" min="0" max="40" value="16" step="1">
+      </div>
+      <div class="ctrl">
+        <div class="toggle-row">
+          <input type="checkbox" id="shadowOn" checked>
+          <label for="shadowOn" style="margin-bottom:0">Box Shadow</label>
+        </div>
+      </div>
+      <div class="ctrl" id="shadowCtrl">
+        <label>Shadow Intensity <span id="shadowVal">0.1</span></label>
+        <input type="range" id="shadow" min="0" max="50" value="10" step="1">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Presets</h3>
+      <div class="presets">
+        <button data-preset="light">Light Glass</button>
+        <button data-preset="dark">Dark Glass</button>
+        <button data-preset="frosted">Frosted</button>
+        <button data-preset="subtle">Subtle</button>
+        <button data-preset="bold">Bold</button>
+        <button data-preset="colored">Colored</button>
+        <button data-preset="card">Card</button>
+        <button data-preset="navbar">Navbar</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Generated CSS</h3>
+      <div class="output-area">
+        <button class="copy-btn" id="copyBtn">Copy</button>
+        <pre id="cssOutput"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <a href="https://yurukusa.github.io/dev-toolkit/">Dev Toolkit</a> — 70+ free browser-based developer tools
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const blur = $('blur'), opacity = $('opacity'), bgColor = $('bgColor'), bgColorText = $('bgColorText');
+const borderOp = $('borderOp'), radius = $('radius'), shadowOn = $('shadowOn'), shadow = $('shadow');
+const card = $('glassCard'), previewBg = $('previewBg'), cssOutput = $('cssOutput');
+const copyBtn = $('copyBtn'), shadowCtrl = $('shadowCtrl');
+
+const presets = {
+  light:   { blur:10, opacity:15, color:'#ffffff', borderOp:20, radius:16, shadowOn:true,  shadow:10 },
+  dark:    { blur:12, opacity:20, color:'#000000', borderOp:15, radius:16, shadowOn:true,  shadow:15 },
+  frosted: { blur:25, opacity:10, color:'#ffffff', borderOp:30, radius:12, shadowOn:false, shadow:0  },
+  subtle:  { blur:4,  opacity:8,  color:'#ffffff', borderOp:10, radius:12, shadowOn:false, shadow:0  },
+  bold:    { blur:20, opacity:30, color:'#ffffff', borderOp:40, radius:20, shadowOn:true,  shadow:25 },
+  colored: { blur:14, opacity:20, color:'#5858ff', borderOp:25, radius:16, shadowOn:true,  shadow:12 },
+  card:    { blur:16, opacity:12, color:'#ffffff', borderOp:18, radius:24, shadowOn:true,  shadow:20 },
+  navbar:  { blur:12, opacity:18, color:'#ffffff', borderOp:15, radius:0,  shadowOn:true,  shadow:8  },
+};
+
+function hexToRgb(h) {
+  h = h.replace('#','');
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  const n = parseInt(h, 16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+
+function update() {
+  const b = +blur.value, o = +opacity.value/100, r = +radius.value;
+  const bo = +borderOp.value/100, s = +shadow.value/100;
+  const hasShadow = shadowOn.checked;
+  const [cr, cg, cb] = hexToRgb(bgColor.value);
+
+  shadowCtrl.style.display = hasShadow ? '' : 'none';
+
+  // Update value displays
+  $('blurVal').textContent = b + 'px';
+  $('opacityVal').textContent = o.toFixed(2);
+  $('borderOpVal').textContent = bo.toFixed(2);
+  $('radiusVal').textContent = r + 'px';
+  $('shadowVal').textContent = s.toFixed(2);
+
+  // Apply to card
+  card.style.background = `rgba(${cr}, ${cg}, ${cb}, ${o})`;
+  card.style.backdropFilter = `blur(${b}px)`;
+  card.style.webkitBackdropFilter = `blur(${b}px)`;
+  card.style.border = `1px solid rgba(255, 255, 255, ${bo})`;
+  card.style.borderRadius = r + 'px';
+  card.style.boxShadow = hasShadow ? `0 8px 32px rgba(0, 0, 0, ${s})` : 'none';
+
+  // Generate CSS
+  let css = `.glass {\n`;
+  css += `  background: rgba(${cr}, ${cg}, ${cb}, ${o});\n`;
+  css += `  backdrop-filter: blur(${b}px);\n`;
+  css += `  -webkit-backdrop-filter: blur(${b}px);\n`;
+  css += `  border: 1px solid rgba(255, 255, 255, ${bo});\n`;
+  css += `  border-radius: ${r}px;\n`;
+  if (hasShadow) css += `  box-shadow: 0 8px 32px rgba(0, 0, 0, ${s});\n`;
+  css += `}`;
+  cssOutput.textContent = css;
+
+  // Clear active preset
+  document.querySelectorAll('.presets button').forEach(b => b.classList.remove('active'));
+}
+
+[blur, opacity, borderOp, radius, shadow].forEach(el => el.addEventListener('input', update));
+shadowOn.addEventListener('change', update);
+bgColor.addEventListener('input', () => { bgColorText.value = bgColor.value; update(); });
+bgColorText.addEventListener('input', () => {
+  if (/^#[0-9a-fA-F]{6}$/.test(bgColorText.value)) { bgColor.value = bgColorText.value; update(); }
+});
+
+// Presets
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = presets[btn.dataset.preset];
+    blur.value = p.blur; opacity.value = p.opacity;
+    bgColor.value = p.color; bgColorText.value = p.color;
+    borderOp.value = p.borderOp; radius.value = p.radius;
+    shadowOn.checked = p.shadowOn; shadow.value = p.shadow;
+    update();
+    document.querySelectorAll('.presets button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Background options
+function clearShapes() {
+  const sc = previewBg.querySelector('.shapes-container');
+  if (sc) sc.remove();
+}
+
+function createShapes() {
+  clearShapes();
+  const container = document.createElement('div');
+  container.className = 'shapes-container';
+  const colors = ['#667eea','#764ba2','#f093fb','#43e97b','#38f9d7','#fa709a','#fee140','#58a6ff'];
+  for (let i = 0; i < 12; i++) {
+    const shape = document.createElement('div');
+    shape.className = 'shape';
+    const size = 30 + Math.random() * 80;
+    shape.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*90}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${6+Math.random()*8}s;
+      animation-delay:${Math.random()*5}s;
+    `;
+    container.appendChild(shape);
+  }
+  previewBg.appendChild(container);
+}
+
+document.querySelectorAll('.bg-options button, .bg-options label').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.bg-options button, .bg-options label').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const bg = btn.dataset.bg;
+    previewBg.className = 'preview-bg';
+    clearShapes();
+    const img = previewBg.querySelector('img');
+    if (img) img.remove();
+
+    if (bg === 'grad1') previewBg.classList.add('grad1');
+    else if (bg === 'grad2') previewBg.classList.add('grad2');
+    else if (bg === 'grad3') previewBg.classList.add('grad3');
+    else if (bg === 'shapes') createShapes();
+  });
+});
+
+$('bgUpload').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    previewBg.className = 'preview-bg';
+    clearShapes();
+    const existing = previewBg.querySelector('img');
+    if (existing) existing.remove();
+    const img = document.createElement('img');
+    img.src = ev.target.result;
+    previewBg.appendChild(img);
+    document.querySelectorAll('.bg-options button, .bg-options label').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-bg="custom"]').classList.add('active');
+  };
+  reader.readAsDataURL(file);
+});
+
+// Copy
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(cssOutput.textContent).then(() => {
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+  });
+});
+
+// Init
+update();
+</script>
+</body>
+</html>
